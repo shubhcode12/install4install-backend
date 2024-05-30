@@ -1,8 +1,7 @@
 const mongoose = require("mongoose");
 const App = require("../models/apps.schema");
 const User = require("../models/user.schema");
-const CONSTANT = require("../utils/constants")
-
+const CONSTANT = require("../utils/constants");
 
 const getAllApps = async (req, res) => {
   try {
@@ -19,11 +18,13 @@ const getAllApps = async (req, res) => {
     })
       .limit(limit)
       .skip((page - 1) * limit);
-      
+
     res.json(apps);
   } catch (error) {
     console.error("Error fetching apps:", error);
-    res.status(500).json({ error: "Error fetching apps", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Error fetching apps", details: error.message });
   }
 };
 
@@ -117,7 +118,9 @@ const registerApp = async (req, res) => {
     await session.abortTransaction();
     session.endSession();
     console.error("Error registering app:", error);
-    res.status(500).json({ error: "Error registering app", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Error registering app", details: error.message });
   }
 };
 
@@ -158,13 +161,58 @@ const addToInstalledApps = async (req, res) => {
     await session.commitTransaction();
     session.endSession();
 
-    res.json({ message: "App is installed, you won 5 coins", coins: currUser.coins });
+    res.json({
+      message: "App is installed, you won 5 coins",
+      coins: currUser.coins,
+    });
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
     console.error("Error adding installed app:", error);
-    res.status(500).json({ error: "Error adding installed app", details: error.message });
+    res
+      .status(500)
+      .json({ error: "Error adding installed app", details: error.message });
   }
 };
 
-module.exports = { getAllApps, removeApp, registerApp, addToInstalledApps };
+async function getAppDetails(packageId) {
+  const url = `https://play.google.com/store/apps/details?id=${packageId}`;
+
+  try {
+    const { data } = await axios.get(url);
+
+    const $ = cheerio.load(data);
+
+    const title = $('h1[itemprop="name"]').text().trim();
+    const developer = $("div.tv4jIf > div.Vbfug > a > span").text().trim();
+    const description = $("div.bARER")
+      .html()
+      .replace(/<br\s*\/?>/gi, "\n")
+      .trim();
+    const rating = $("div.TT9eCd").attr("aria-label")
+      ? $("div.TT9eCd")
+          .attr("aria-label")
+          .match(/Rated ([\d.]+) stars/)[1]
+      : "N/A";
+    const reviewsCount = $("span.AYi5wd.TBRnV").text().trim();
+    const installs = $("div.wVqUob").first().find(".ClM7O").text().trim();
+    const contentRating = $('span[itemprop="contentRating"]').text().trim();
+    const icon = $('img[itemprop="image"]').attr("src");
+
+    return {
+      title,
+      developer,
+      description,
+      rating,
+      reviewsCount,
+      installs,
+      contentRating,
+      icon,
+    };
+  } catch (error) {
+    console.error("Error fetching app details:", error);
+    throw new Error("Failed to fetch app details");
+  }
+}
+
+module.exports = { getAllApps, removeApp, registerApp, addToInstalledApps, getAppDetails };

@@ -5,9 +5,20 @@ const adRouter = require("./routes/ad.route");
 const authRouter = require("./routes/auth.route");
 const appRouter = require("./routes/app.route");
 const rewardRouter = require("./routes/rewards.route");
+const initializeFirebase = require("./config/firebase");
+const playstore = require("playstore-scraper");
 
 const app = express();
+
+initializeFirebase();
 connectDB();
+
+playstore
+  .search("whatsapp")
+  .then((res) => {
+    console.log(res);
+  })
+  .catch((err) => console.log(err));
 
 app.use(express.json());
 app.use(adRouter);
