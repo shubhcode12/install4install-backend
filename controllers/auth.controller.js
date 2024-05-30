@@ -27,13 +27,13 @@ const authUser = async (req, res) => {
     const user = await User.findOne({ uid: sub });
 
     if (user) {
-      res.json({ "user authenticated: ": user });
+      res.json({ message: "user authenticated", user: user });
     } else {
       console.log("User not found, creating new user");
       const newUser = new User({ uid: sub, name: name, email: email });
       await newUser.save();
 
-      res.json({ "new user created": newUser });
+      res.json({ message: "new user created", user: newUser });
     }
   } catch (error) {
     console.error("Error fetching users:", error);

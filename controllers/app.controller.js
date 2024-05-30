@@ -133,7 +133,7 @@ const addToInstalledApps = async (req, res) => {
   try {
     const currUser = await User.findOne({ uid: uid }).session(session);
     if (!currUser) {
-      throw new Error("User not found");
+      return res.status(404).json({ error: "User not found" });
     }
 
     currUser.installedApps.push(appPackageName);
@@ -211,7 +211,8 @@ async function getAppDetails(packageId) {
     };
   } catch (error) {
     console.error("Error fetching app details:", error);
-    throw new Error("Failed to fetch app details");
+    res.status(404).json({ error: "Failed to fetch app details" });
+    
   }
 }
 
