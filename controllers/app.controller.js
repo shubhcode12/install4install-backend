@@ -2,6 +2,8 @@ const mongoose = require("mongoose");
 const App = require("../models/apps.schema");
 const User = require("../models/user.schema");
 const CONSTANT = require("../utils/constants");
+const axios = require("axios");
+const cheerio = require("cheerio");
 
 const getAllApps = async (req, res) => {
   try {
@@ -175,30 +177,40 @@ const addToInstalledApps = async (req, res) => {
   }
 };
 
-async function getAppDetails(packageId) {
+const getAppDetails = async (req, res) => {
+  const body = req.body;
+
+  scrapAppDetails(body.packageId)
+    .then((details) => res.json(details))
+    .catch((error) => res.json({ error: error }));
+};
+
+async function scrapAppDetails(packageId) {
   const url = `https://play.google.com/store/apps/details?id=${packageId}`;
 
   try {
+    // Fetch the HTML content of the page
     const { data } = await axios.get(url);
 
+    // Load the HTML into cheerio
     const $ = cheerio.load(data);
 
-    const title = $('h1[itemprop="name"]').text().trim();
+    // Extract the application details
+    const title = $('h1[itemprop="name"]').text();
     const developer = $("div.tv4jIf > div.Vbfug > a > span").text().trim();
     const description = $("div.bARER")
-      .html()
+      .text()
       .replace(/<br\s*\/?>/gi, "\n")
       .trim();
-    const rating = $("div.TT9eCd").attr("aria-label")
-      ? $("div.TT9eCd")
-          .attr("aria-label")
-          .match(/Rated ([\d.]+) stars/)[1]
-      : "N/A";
-    const reviewsCount = $("span.AYi5wd.TBRnV").text().trim();
-    const installs = $("div.wVqUob").first().find(".ClM7O").text().trim();
-    const contentRating = $('span[itemprop="contentRating"]').text().trim();
+    const rating = $("div.TT9eCd")
+      .attr("aria-label")
+      .match(/Rated ([\d.]+) stars/)[1];
+    const reviewsCount = $("span.AYi5wd.TBRnV").text();
+    const installs = $("div.wVqUob").first().find(".ClM7O").text();
+    const contentRating = $('span[itemprop="contentRating"]').text();
     const icon = $('img[itemprop="image"]').attr("src");
 
+    // Return the extracted details
     return {
       title,
       developer,
@@ -211,9 +223,14 @@ async function getAppDetails(packageId) {
     };
   } catch (error) {
     console.error("Error fetching app details:", error);
-    res.status(404).json({ error: "Failed to fetch app details" });
-    
+    return null;
   }
 }
 
-module.exports = { getAllApps, removeApp, registerApp, addToInstalledApps, getAppDetails };
+module.exports = {
+  getAllApps,
+  removeApp,
+  registerApp,
+  addToInstalledApps,
+  getAppDetails,
+};

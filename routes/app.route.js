@@ -13,7 +13,7 @@ router.post("/apps", getAllApps);
 router.delete("/apps/remove", removeApp);
 router.put("/apps/register", registerApp);
 router.put("/apps/addInstalledApp", addToInstalledApps);
-router.put("/getAppDetails", getAppDetails);
+router.post("/getAppDetails", getAppDetails);
 
 
 module.exports = router;
