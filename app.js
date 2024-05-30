@@ -25,6 +25,11 @@ async function getAppDetails(packageId) {
     const installs = $("div.wVqUob").first().find(".ClM7O").text();
     const contentRating = $('span[itemprop="contentRating"]').text();
     const icon = $('img[itemprop="image"]').attr("src");
+    const screenshots = [];
+    $("img.T75of.B5GQxf").each((i, element) => {
+      const screenshotUrl = $(element).attr("src");
+      screenshots.push(screenshotUrl);
+    });
 
     // Return the extracted details
     return {
@@ -36,6 +41,7 @@ async function getAppDetails(packageId) {
       installs,
       contentRating,
       icon,
+      screenshots
     };
   } catch (error) {
     console.error("Error fetching app details:", error);
@@ -44,6 +50,6 @@ async function getAppDetails(packageId) {
 }
 
 // Example usage
-getAppDetails("com.tuya.smartlife")
+getAppDetails("com.zyapaar.mobile")
   .then((details) => console.log(details))
   .catch((error) => console.error("Error:", error));
