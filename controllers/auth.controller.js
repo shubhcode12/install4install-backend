@@ -12,7 +12,7 @@ const verifyToken = async (req, res, next) => {
     console.log(decodedToken);
     next();
   } catch (error) {
-    res.status(401).json({ error: error.message });
+    res.status(401).json({ error: error.message, message: "token is invalid" });
   }
 };
 
@@ -35,7 +35,7 @@ const authUser = async (req, res) => {
     }
   } catch (error) {
     console.error("Error fetching users:", error);
-    res.status(500).json({ error: error.message, message : "auth error" });
+    res.status(500).json({ error: error.message, message: "auth error" });
   }
 };
 
