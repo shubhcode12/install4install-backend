@@ -6,6 +6,7 @@ const dailySpinReward = 3;
 const bonusSignupCoins = 10;
 const appPromotionCost = 5;
 const appInstallRewardCoins = 5;
+const watchAdRewardSpin = 3;
 
 // Export each constant individually
 module.exports = {
@@ -16,4 +17,5 @@ module.exports = {
   bonusSignupCoins,
   appPromotionCost,
   appInstallRewardCoins,
+  watchAdRewardSpin
 };

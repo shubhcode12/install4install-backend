@@ -1,4 +1,7 @@
 const Ad = require("../models/ad.schema");
+const User = require("../models/user.schema");
+const CONSTANT = require("../utils/constants");
+
 
 const getAllAds = async (req, res) => {
   try {
@@ -20,4 +23,20 @@ const createAd = async (req, res) => {
   }
 };
 
-module.exports = { getAllAds, createAd };
+const watchAd = async (req, res) => {
+  try {
+    const { uid } = req.body;
+    const user = await User.findOne({ uid });
+    if (!user) {
+      console.error("User not found");
+      return res.status(404).json({ error: "User not found" });
+    }
+    user.spinAvailable += CONSTANT.watchAdRewardSpin;
+    await user.save();
+    res.json({message : `ad watched and earned ${CONSTANT.watchAdRewardSpin} spins`})
+  } catch (error) {
+    res.status(500).json({ error: "Error adding ad", details: error });
+  }
+}
+
+module.exports = { getAllAds, createAd, watchAd };
