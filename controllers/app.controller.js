@@ -15,13 +15,38 @@ const getAllApps = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    const apps = await App.find({
-      appPackageName: { $nin: user.installedApps },
-    })
-      .limit(limit)
-      .skip((page - 1) * limit);
+    // Extract app package names from promotedApps
+    const promotedAppPackageNames = user.promotedApps.map(
+      (app) => app.appPackageName
+    );
 
-    res.json(apps);
+    // Combine installedApps and promotedAppPackageNames into one array
+    const combinedExcludedApps = [
+      ...user.installedApps,
+      ...promotedAppPackageNames,
+    ];
+
+    // Find apps not in the combinedExcludedApps array
+    let apps = await App.find({
+      appPackageName: { $nin: combinedExcludedApps },
+    });
+
+    // Filter out apps where the developer does not have enough coins
+    const filteredApps = [];
+    for (const app of apps) {
+      const developer = await User.findOne({ uid: app.developerUid });
+      if (developer && developer.coins >= CONSTANT.appPromotionCost) {
+        filteredApps.push(app);
+      }
+    }
+
+    // Apply pagination
+    const paginatedApps = filteredApps.slice((page - 1) * limit, page * limit);
+    if (paginatedApps.length > 0) {
+      res.json(paginatedApps);
+    } else {
+      res.status(404).json({ error: "No apps", message: "Apps not found" });
+    }
   } catch (error) {
     console.error("Error fetching apps:", error);
     res
@@ -135,7 +160,16 @@ const addToInstalledApps = async (req, res) => {
   try {
     const currUser = await User.findOne({ uid: uid }).session(session);
     if (!currUser) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(404).json({ error: "User not found" });
+    }
+
+    const alreadyInstalledApp = currUser.installedApps.includes(appPackageName);
+    if (alreadyInstalledApp) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ error: "App already installed" });
     }
 
     currUser.installedApps.push(appPackageName);
@@ -143,21 +177,46 @@ const addToInstalledApps = async (req, res) => {
     const currApp = await App.findOne({
       appPackageName: appPackageName,
     }).session(session);
+    if (!currApp) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ error: "App not found" });
+    }
     const developerUid = currApp.developerUid;
 
     const currDeveloper = await User.findOne({ uid: developerUid }).session(
       session
     );
+    if (!currDeveloper) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ error: "Developer not found" });
+    }
 
     const promotedApp = currDeveloper.promotedApps.find(
       (app) => app.appPackageName === appPackageName
     );
+    if (!promotedApp) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(404).json({ error: "Promoted app not found" });
+    }
 
     promotedApp.totalAppInstalls++;
     currUser.coins += CONSTANT.appInstallRewardCoins;
 
     await currUser.save({ session });
+
+    if (currDeveloper.coins <= CONSTANT.appPromotionCost) {
+      currDeveloper.coins = 0;
+    } else {
+      currDeveloper.coins -= CONSTANT.appPromotionCost;
+    }
+
+    // Mark the promotedApp and coins as modified
     currDeveloper.markModified("promotedApps");
+    currDeveloper.markModified("coins");
+
     await currDeveloper.save({ session });
 
     await session.commitTransaction();
@@ -170,7 +229,10 @@ const addToInstalledApps = async (req, res) => {
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
-    console.error("Error adding installed app:", error);
+    console.error({
+      error: error.message,
+      message: "Error adding installed app",
+    });
     res
       .status(500)
       .json({ error: "Error adding installed app", details: error.message });
@@ -225,7 +287,7 @@ async function scrapAppDetails(packageId) {
       installs,
       contentRating,
       icon,
-      screenshots
+      screenshots,
     };
   } catch (error) {
     console.error("Error fetching app details:", error);
