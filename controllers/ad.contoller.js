@@ -8,7 +8,7 @@ const getAllAds = async (req, res) => {
     const ads = await Ad.find({});
     res.json(ads);
   } catch (error) {
-    res.status(500).json({ error: "Error fetching ads", details: error });
+    res.status(500).json({ message: "Error fetching ads", error: error.message });
   }
 };
 
@@ -19,7 +19,7 @@ const createAd = async (req, res) => {
     const savedAd = await newAd.save();
     res.json(savedAd);
   } catch (error) {
-    res.status(500).json({ error: "Error adding ad", details: error });
+    res.status(500).json({ message: "Error adding ad", error: error.message });
   }
 };
 
@@ -29,13 +29,13 @@ const watchAd = async (req, res) => {
     const user = await User.findOne({ uid });
     if (!user) {
       console.error("User not found");
-      return res.status(404).json({ error: "User not found" });
+      return res.status(404).json({error : "unable to fetch user", message: "User not found" });
     }
     user.spinAvailable += CONSTANT.watchAdRewardSpin;
     await user.save();
     res.json({message : `ad watched and earned ${CONSTANT.watchAdRewardSpin} spins`})
   } catch (error) {
-    res.status(500).json({ error: "Error adding ad", details: error });
+    res.status(500).json({ message: "Error adding ad", error: error.message });
   }
 }
 
