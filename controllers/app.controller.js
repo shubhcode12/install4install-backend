@@ -42,8 +42,9 @@ const getAllApps = async (req, res) => {
 
     // Apply pagination
     const paginatedApps = filteredApps.slice((page - 1) * limit, page * limit);
+    const isNextPageAvailable = filteredApps.length > page * limit;
     if (paginatedApps.length > 0) {
-      res.json(paginatedApps);
+      res.json({ hasNextPage: isNextPageAvailable, data: paginatedApps });
     } else {
       res.status(404).json({ error: "No apps", message: "Apps not found" });
     }
