@@ -12,7 +12,9 @@ const getAllApps = async (req, res) => {
     const user = await User.findOne({ uid });
     if (!user) {
       console.error("User not found");
-      return res.status(404).json({ error: "User not found" });
+      return res
+        .status(404)
+        .json({ error: error.message, message: "User not found" });
     }
 
     // Extract app package names from promotedApps
@@ -52,7 +54,7 @@ const getAllApps = async (req, res) => {
     console.error("Error fetching apps:", error);
     res
       .status(500)
-      .json({ error: "Error fetching apps", details: error.message });
+      .json({ message: "Error fetching apps", error: error.message });
   }
 };
 
