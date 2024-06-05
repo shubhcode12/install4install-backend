@@ -58,6 +58,29 @@ const getAllApps = async (req, res) => {
   }
 };
 
+const getMyRegistredApps = async (req, res) => {
+  try {
+    const { uid } = req.body;
+    const user = await User.findOne({ uid });
+    if (!user) {
+      console.error("User not found");
+      return res
+        .status(404)
+        .json({ error: error.message, message: "User not found" });
+    }
+
+    res.json({ promotedApps: user.promotedApps });
+  } catch (error) {
+    console.error("Error fetching my registred apps:", error);
+    res
+      .status(500)
+      .json({
+        message: "Error fetching my registred apps",
+        error: error.message,
+      });
+  }
+};
+
 const removeApp = async (req, res) => {
   const { uid, packageId } = req.body;
 
@@ -304,4 +327,5 @@ module.exports = {
   registerApp,
   addToInstalledApps,
   getAppDetails,
+  getMyRegistredApps,
 };

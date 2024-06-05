@@ -4,7 +4,8 @@ const {
   removeApp,
   registerApp,
   addToInstalledApps,
-  getAppDetails
+  getAppDetails,
+  getMyRegistredApps
 } = require("../controllers/app.controller");
 
 const router = express.Router();
@@ -14,6 +15,7 @@ router.delete("/apps/remove", removeApp);
 router.put("/apps/register", registerApp);
 router.put("/apps/addInstalledApp", addToInstalledApps);
 router.post("/getAppDetails", getAppDetails);
+router.post("/apps/getRegistredApps", getMyRegistredApps)
 
 
 module.exports = router;
