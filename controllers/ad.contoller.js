@@ -1,6 +1,7 @@
 const Ad = require("../models/ad.schema");
 const User = require("../models/user.schema");
 const CONSTANT = require("../utils/constants");
+const Onboarding = require("../models/onboarding.schema")
 
 
 const getAllAds = async (req, res) => {
@@ -39,4 +40,26 @@ const watchAd = async (req, res) => {
   }
 }
 
-module.exports = { getAllAds, createAd, watchAd };
+const getAllOnboarding = async (req, res) => {
+  try {
+    const data = await Onboarding.find({});
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ message: "Error onboarding screens", error: error.message });
+  }
+};
+
+const addOnboarding = async (req, res) => {
+  try {
+    const { title , imageUrl, description } = req.body;
+    const newOnboarding = new Onboarding({ title, imageUrl, description });
+    const savedOnBoard = await newOnboarding.save();
+    res.json(savedOnBoard);
+  } catch (error) {
+    res.status(500).json({ message: "Error adding onborading sscreen", error: error.message });
+  }
+};
+
+
+
+module.exports = { getAllAds, createAd, watchAd, getAllOnboarding, addOnboarding };
